@@ -115,7 +115,6 @@ struct ContentView: View {
                     .lineLimit(nil)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 80)
-                    .padding(.horizontal, 32)
                 
                 Spacer()
                 Text("New quote in 2:40mins").foregroundColor(.white).font(.caption)

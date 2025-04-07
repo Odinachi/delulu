@@ -1,4 +1,4 @@
-//
+    //
 //  Item.swift
 //  delulu
 //
@@ -9,10 +9,12 @@ import Foundation
 import SwiftData
 
 @Model
-final class Item {
+final class Quote {
     var quote: String
+    var snug: String
     
-    init(qoute: String) {
+    init(qoute: String,snug: String) {
         self.quote = qoute
+        self.snug  = snug
     }
 }

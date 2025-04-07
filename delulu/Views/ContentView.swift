@@ -2,19 +2,104 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    
+    @Query private var items: [Quote]
+    
+    let quoteService = QuoteService(snug: "")
     
     let colors: [Color] = [.red, .blue, .green, .yellow, .orange, .purple, .pink, .gray, .black, .white]
+    
     let images: [String] = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
+    
     let fonts: [String] = ["SfPro","Rooster","PrettySingle", "Ladywish", "CatchyMager"]
+    
     @State private var showImageDialog = false
+    
     @State private var showTextDialog = false
+    
+    @State private var authenticated = false
+    
     @State private var fontStyle = "SfPro"
+    
     @State private var bgImg = "1"
     
+    var professionMap:[[String: String]] = roles
+    
+    @State private var selectedSnug: String = "software_developer"
+    
+    @State private var selectedName: String = "Software Developer"
+    
+    
+    
     var body: some View {
-        ZStack {
+        
+        if !authenticated {
+            ZStack {
+                
+                Image("bg")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                
+                Color.black.opacity(0.3)
+                
+                    .ignoresSafeArea()
+                VStack {
+                    
+                    Text("Select Profession")
+                        .font(.largeTitle)
+                        .foregroundColor(.white).padding(.top, 100).padding(.bottom,50)
+
+                    
+                    Picker("Profession", selection: $selectedName) {
+                        ForEach(professionMap, id: \.self) { profession in
+                            Text(profession["name"] ?? "Unknown")
+                                .foregroundColor(.white)
+                                .fontWeight(.semibold)
+                                .tag(profession["name"] ?? "")
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .foregroundColor(.white)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.black.opacity(0.3))
+                    )
+                    .frame(height: 150)
+                    .clipped()
+                    .onChange(of: selectedName) { oldValue, newValue in
+                        if let selected = professionMap.first(where: { $0["name"] == newValue }) {
+                            selectedSnug = selected["snug"] ?? ""
+                        }
+                    }
+                    Spacer()
+                    
+                    Button(action: {
+                        withAnimation {
+                            authenticated = true
+                        }
+                    }) {
+                        Text("Start")
+                            .font(.headline)
+                            .foregroundColor(.black)
+                            .padding()
+                            .frame(maxWidth:300)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.white)
+                            )
+                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                            .padding(.horizontal, 32)
+                    }
+                    Spacer()
+                }
+                
+            }
+        }
+        else {
+            ZStack {
             
             Image(bgImg)
                 .resizable()
@@ -33,7 +118,7 @@ struct ContentView: View {
                         withAnimation {
                             showImageDialog = false;
                             showTextDialog.toggle()
-                         
+                            
                         }
                     }) {
                         Text("T").foregroundColor(.white).font(.title)
@@ -77,7 +162,7 @@ struct ContentView: View {
                     .frame(height: 100)
                     
                     .transition(.scale)
-                }     
+                }
                 if showTextDialog {
                     ScrollView([.horizontal],showsIndicators: false) {
                         HStack(spacing: 15) {
@@ -117,18 +202,30 @@ struct ContentView: View {
                     .padding(.vertical, 80)
                 
                 Spacer()
-                Text("New quote in 2:40mins").foregroundColor(.white).font(.caption)
+                HStack {
+                    Spacer()
+                    Text("New quote in 2:40mins").foregroundColor(.white).font(.caption)
+                    Button(action: {
+                        withAnimation {
+                            authenticated = false
+                        }
+                    }){
+                        Image(systemName: "globe").foregroundColor(.white).font(.callout)
+                    }
+                    Spacer()
+                }
             }
             .frame(
                 width:UIScreen.main.bounds.width
             )
             
             
-        }
+            
+        }}
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: Quote.self, inMemory: true)
 }

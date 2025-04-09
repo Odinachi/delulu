@@ -12,9 +12,13 @@ import SwiftData
 final class Quote {
     var quote: String
     var snug: String
+    var saved: Bool?
+    var timestamp: Date?
     
-    init(qoute: String,snug: String) {
-        self.quote = qoute
+    init(quote: String,snug: String, saved: Bool? = nil, timestamp: Date? = nil) {
+        self.quote = quote
         self.snug  = snug
+        self.saved = saved
+        self.timestamp = timestamp
     }
 }

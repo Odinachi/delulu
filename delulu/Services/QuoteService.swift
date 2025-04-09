@@ -3,47 +3,54 @@ import FirebaseFirestore
 
 class QuoteService: ObservableObject {
     
-    init(snug: String ) {
-        self.snug = snug
-    }
-    
     let snug: String
-    
-    @Published var quotes: [Quote] = []
-    
     @Published var quote: String = ""
     
     private let db = Firestore.firestore()
     
+    init(snug: String) {
+        self.snug = snug
+    }
     
-    
-    func fetchLatestQuote() {
+    func fetchLatestQuote(completion: @escaping (Quote?) -> Void) {
         db.collection("Quotes")
             .order(by: "date", descending: true)
             .limit(to: 1)
             .getDocuments { snapshot, error in
                 if let error = error {
                     print("Error fetching latest quote: \(error.localizedDescription)")
+                    completion(nil)
                     return
                 }
                 
                 guard let document = snapshot?.documents.first else {
                     print("No quotes found")
+                    completion(nil)
                     return
                 }
                 
                 let data = document.data()
-                guard let text = data["text"] as? String,
-                      let author = data["author"] as? String else {
+                
+                guard let text = data[self.snug] as? String,
+                      let dateString = data["date"] as? String,
+                      let date = QuoteService.parseDate(from: dateString) else {
                     print("Invalid data in document")
+                    completion(nil)
                     return
                 }
                 
-                self.quotes = [Quote(qoute: text, snug: "")]
+                let fetchedQuote = Quote(quote: text, snug: self.snug, saved: false, timestamp: date)
+                completion(fetchedQuote)
             }
     }
+    
+    private static func parseDate(from string: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter.date(from: string)
+    }
 }
-
 
 let roles: [[String: String]] = [
     ["name": "Software Developer", "snug": "software_developer"],

@@ -12,44 +12,82 @@ class QuoteService: ObservableObject {
         self.snug = snug
     }
     
+    
+    func createQuote(snug: String, profession: String) async throws -> Quote {
+        guard let url = URL(string: "https://us-central1-delulu-863d4.cloudfunctions.net/generateSatireQuotesManually") else {
+            throw URLError(.badURL)
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let requestBody: [String: String] = [
+            "snug": snug,
+            "profession": profession
+        ]
+        
+        request.httpBody = try JSONEncoder().encode(requestBody)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+        
+        
+        let decoder = JSONDecoder()
+        let satireResponse = try decoder.decode(SatireQuoteResponse.self, from: data)
+        
+        let fetchedQuote = Quote(
+            quote: satireResponse.quotes.quote,
+            snug: satireResponse.quotes.snug,
+            saved: false,
+            timestamp: satireResponse.quotes.createdAt
+        )
+
+        return fetchedQuote
+    }
+    
+    
+    
     func fetchLatestQuote(completion: @escaping (Quote?) -> Void) {
+    
         db.collection("Quotes")
-            .order(by: "date", descending: true)
+            .order(by: "createdAt", descending: true)
+            .whereField("snug", isEqualTo: snug)
             .limit(to: 1)
             .getDocuments { snapshot, error in
                 if let error = error {
-                    print("Error fetching latest quote: \(error.localizedDescription)")
+       
                     completion(nil)
                     return
                 }
                 
                 guard let document = snapshot?.documents.first else {
-                    print("No quotes found")
+           
                     completion(nil)
                     return
                 }
                 
                 let data = document.data()
                 
-                guard let text = data[self.snug] as? String,
-                      let dateString = data["date"] as? String,
-                      let date = QuoteService.parseDate(from: dateString) else {
-                    print("Invalid data in document")
+                guard let text = data["quote"] as? String,
+                      let timestamp = data["createdAt"] as? Timestamp else {
+                   
                     completion(nil)
                     return
                 }
                 
-                let fetchedQuote = Quote(quote: text, snug: self.snug, saved: false, timestamp: date)
+                _ = timestamp.dateValue()
+                let fetchedQuote = Quote(quote: text, snug: self.snug, saved: false, timestamp: timestamp)
                 completion(fetchedQuote)
             }
+        
     }
     
-    private static func parseDate(from string: String) -> Date? {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        return formatter.date(from: string)
-    }
+    
 }
 
 let roles: [[String: String]] = [
@@ -74,3 +112,5 @@ let roles: [[String: String]] = [
     ["name": "Creative & Media", "snug": "creative_media"],
     ["name": "Customer Support & Operations", "snug": "support_operations"]
 ]
+
+

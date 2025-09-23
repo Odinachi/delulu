@@ -159,6 +159,9 @@ struct ContentView: View {
                                        
                                         errorMsg = error.localizedDescription
                                         showToast = true
+                                        DispatchQueue.global().asyncAfter(deadline: .now() + 2) {
+                                                  showToast = false
+                                               }
                                         
                                     }
                                 }
@@ -346,6 +349,9 @@ struct ContentView: View {
             } catch {
                 errorMsg = error.localizedDescription
                 showToast = true
+                DispatchQueue.global().asyncAfter(deadline: .now() + 2) {
+                          showToast = false
+                       }
             }
         }
     }
@@ -416,13 +422,16 @@ struct ContentView: View {
            
             errorMsg = error.localizedDescription
             showToast = true
+            DispatchQueue.global().asyncAfter(deadline: .now() + 2) {
+                      showToast = false
+                   }
         }
     }
 }
 
 extension View {
     func toast(isShown: Binding<Bool>, title: String? = nil, message: String, icon: Image = Image(systemName: "exclamationmark.circle"), alignment: Alignment = .top) -> some View {
-        
+       
         ZStack {
             self
             Toast(isShown: isShown, title: title, message: message, icon: icon, alignment: alignment)

@@ -1,8 +1,6 @@
 import SwiftUI
 
 
-
-
 struct Toast: View {
     @Binding var isShown: Bool
     var title: String? = "title"
@@ -15,29 +13,32 @@ struct Toast: View {
             if isShown {
                 HStack(spacing: 16) {
                     icon
-                    VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .center, spacing: 4) {
                         if let title {
                             Text(title)
                                 .fontWeight(.semibold)
-                                .multilineTextAlignment(.leading)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(nil)   // allow wrapping
                         }
                         
                         Text(message)
-                            .multilineTextAlignment(.leading)
-                        
-                        
+                            .multilineTextAlignment(.center)
+                            .lineLimit(nil)     // allow wrapping
+                            .padding(.horizontal, 20)
                     }
+                    .frame(maxWidth: .infinity)
                 }
                 .padding(.vertical, 12)
                 .padding(.horizontal, 24)
                 .background(RoundedRectangle(cornerRadius: 8).fill(.red))
+                .frame(maxWidth: 300) // ✅ full-width container
                 .transition(.move(edge: alignmentToEdge(self.alignment)))
-                
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
         .animation(.linear(duration: 0.15), value: isShown)
-        
+        .padding(.vertical, 12)
+        .padding(.horizontal, 24)
     }
     
     private func alignmentToEdge(_ alignment: Alignment) -> Edge {

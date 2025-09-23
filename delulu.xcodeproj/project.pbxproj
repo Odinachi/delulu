@@ -10,6 +10,7 @@
 		1811245C2DA33AFF008A0D94 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1811245B2DA33AFF008A0D94 /* FirebaseCore */; };
 		1811245E2DA33AFF008A0D94 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 1811245D2DA33AFF008A0D94 /* FirebaseFirestore */; };
 		181124802DA33F6D008A0D94 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 1811247F2DA33F6D008A0D94 /* FirebaseMessaging */; };
+		189828C02E830CA100952217 /* gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 189828BF2E830C9500952217 /* gitignore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,6 +34,7 @@
 		183DDF872DA11D5F00885301 /* delulu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = delulu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		183DDF992DA11D6100885301 /* deluluTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = deluluTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		183DDFA32DA11D6100885301 /* deluluUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = deluluUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		189828BF2E830C9500952217 /* gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -109,6 +111,7 @@
 		183DDF7E2DA11D5F00885301 = {
 			isa = PBXGroup;
 			children = (
+				189828BF2E830C9500952217 /* gitignore */,
 				181124472DA3202A008A0D94 /* Shared */,
 				183DDF892DA11D5F00885301 /* delulu */,
 				183DDF9C2DA11D6100885301 /* deluluTests */,
@@ -255,6 +258,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				189828C02E830CA100952217 /* gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

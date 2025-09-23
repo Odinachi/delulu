@@ -13,6 +13,7 @@ class QuoteService: ObservableObject {
     }
     
     
+    
     func createQuote(snug: String, profession: String) async throws -> Quote {
         guard let url = URL(string: "https://us-central1-delulu-863d4.cloudfunctions.net/generateSatireQuotesManually") else {
             throw URLError(.badURL)

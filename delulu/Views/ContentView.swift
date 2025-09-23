@@ -24,6 +24,9 @@ struct ContentView: View {
     @State private var currentQuoteIndex = 0
     @State private var isLoading = false
     @State private var isScreenshoting = false
+    @State private var showToast: Bool = false
+    @State private var errorMsg: String = ""
+    
     
     
 
@@ -153,7 +156,10 @@ struct ContentView: View {
                                     do {
                                         try modelContext.save()
                                     } catch {
-                                        print("❌ Failed to save quote: \(error)")
+                                       
+                                        errorMsg = error.localizedDescription
+                                        showToast = true
+                                        
                                     }
                                 }
                             }) {
@@ -296,9 +302,11 @@ struct ContentView: View {
                 }
             }
         }
+        
+   
         .onAppear {
             checkForSavedQuotes()
-        }
+        }.toast(isShown: $showToast, message: errorMsg)
     }
     
     private func checkForSavedQuotes() {
@@ -336,24 +344,13 @@ struct ContentView: View {
             do {
                 try modelContext.save()
             } catch {
-                print("❌ Failed to save quote: \(error)")
+                errorMsg = error.localizedDescription
+                showToast = true
             }
         }
     }
     
-    
-//    func takeScreenshot() {
-//        var renderer = ImageRenderer(content: self.body)
-//        
-//        // Ensure the background is opaque (no alpha channel)
-//        renderer.scale = UIScreen.main.scale
-//        renderer.isOpaque = true
-//        
-//        if let image = renderer.uiImage {
-//            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-//            print("Screenshot saved to photos!")
-//        }
-//    }
+
     
     func takeScreenshotAndShare() {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -415,7 +412,20 @@ struct ContentView: View {
             MessagingService.shared.subscribeToTopic(selectedSnug)
             
         } catch {
-            print("❌ Failed to fetch or save quote: \(error)")
+            
+           
+            errorMsg = error.localizedDescription
+            showToast = true
+        }
+    }
+}
+
+extension View {
+    func toast(isShown: Binding<Bool>, title: String? = nil, message: String, icon: Image = Image(systemName: "exclamationmark.circle"), alignment: Alignment = .top) -> some View {
+        
+        ZStack {
+            self
+            Toast(isShown: isShown, title: title, message: message, icon: icon, alignment: alignment)
         }
     }
 }

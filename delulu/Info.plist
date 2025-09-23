@@ -11,9 +11,9 @@
 		<string>SfPro.OTF</string>
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Delulu needs access to save screenshots to your photo library.</string>
+	<string>Chill Off needs access to save screenshots to your photo library.</string>
 	<key>CFBundleDisplayName</key>
-	<string>Delulu</string>
+	<string>Chill Off </string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleDevelopmentRegion</key>

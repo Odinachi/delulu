@@ -53,6 +53,7 @@ class QuoteService: ObservableObject {
     
     
     func fetchLatestQuote(completion: @escaping (Quote?) -> Void) {
+   
     
         db.collection("Quotes")
             .order(by: "createdAt", descending: true)
@@ -72,6 +73,8 @@ class QuoteService: ObservableObject {
                 }
                 
                 let data = document.data()
+                
+                print(data)
                 
                 guard let text = data["quote"] as? String,
                       let timestamp = data["createdAt"] as? Timestamp else {

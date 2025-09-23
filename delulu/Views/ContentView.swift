@@ -22,6 +22,9 @@ struct ContentView: View {
     @State private var selectedProfession: String = "Software Developer"
     
     @State private var currentQuoteIndex = 0
+    @State private var isLoading = false
+    
+
     
     var body: some View {
         Group {
@@ -67,22 +70,39 @@ struct ContentView: View {
                         Spacer()
                         
                         Button(action: {
+                            isLoading = true
                             Task {
                                 await fetchAndSaveQuote()
+                                isLoading = false
                             }
                         }) {
-                            Text("Start")
-                                .font(.headline)
-                                .foregroundColor(.black)
-                                .padding()
-                                .frame(maxWidth: 300)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color.white)
-                                )
-                                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
-                                .padding(.horizontal, 32)
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                                    .scaleEffect(1.2)
+                                    .frame(maxWidth: 300)
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(Color.white)
+                                    )
+                                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                                    .padding(.horizontal, 32)
+                            } else {
+                                Text("Start")
+                                    .font(.headline)
+                                    .foregroundColor(.black)
+                                    .padding()
+                                    .frame(maxWidth: 300)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(Color.white)
+                                    )
+                                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                                    .padding(.horizontal, 32)
+                            }
                         }
+                        .disabled(isLoading)
                         
                         Spacer()
                     }
@@ -119,8 +139,19 @@ struct ContentView: View {
                                     .font(.title2)
                                     .foregroundColor(.white)
                             }
-                            Button(action: {}) {
-                                Image(systemName: "bookmark.fill")
+                            Button(action: {
+                                if !items.isEmpty && currentQuoteIndex < items.count {
+                                    let quoteToUpdate = items[currentQuoteIndex]
+                                    quoteToUpdate.saved = !(quoteToUpdate.saved ?? false)
+                                    
+                                    do {
+                                        try modelContext.save()
+                                    } catch {
+                                        print("❌ Failed to save quote: \(error)")
+                                    }
+                                }
+                            }) {
+                                Image(systemName: !items.isEmpty && currentQuoteIndex < items.count && (items[currentQuoteIndex].saved == true) ? "bookmark.fill" : "bookmark")
                                     .padding()
                                     .font(.title2)
                                     .foregroundColor(.white)
@@ -134,6 +165,7 @@ struct ContentView: View {
                         }
                         .padding(.bottom, (showImageDialog || showTextDialog) ? 0 : 100)
                         .padding(.horizontal, 20)
+                        
                         
                         if showImageDialog {
                             ScrollView(.horizontal, showsIndicators: false) {
@@ -240,7 +272,11 @@ struct ContentView: View {
                             Spacer()
                         }
                     }
-                    .frame(width: UIScreen.main.bounds.width)
+                    .frame(width: UIScreen.main.bounds.width).onAppear {
+                        Task {
+                            await refreshQuotes()
+                        }
+                    }
                 }
             }
         }
@@ -254,6 +290,42 @@ struct ContentView: View {
             authenticated = true
         }
     }
+    
+    private func refreshQuotes() async {
+        guard !items.isEmpty else {
+            withAnimation {
+                authenticated = false
+            }
+            return
+        }
+        if let timestamp = items.first?.timestamp {
+            let timeInterval = Date().timeIntervalSince(timestamp)
+            if timeInterval < 12 * 60 * 60 {
+                return;
+            }
+        }
+
+        let quoteService = QuoteService(snug: selectedSnug)
+
+        let latestQuote = await withCheckedContinuation { continuation in
+            quoteService.fetchLatestQuote { fetchedQuote in
+                continuation.resume(returning: fetchedQuote)
+            }
+        }
+
+        if let latestQuote = latestQuote,
+           latestQuote.timestamp != items.first?.timestamp {
+            modelContext.insert(latestQuote)
+
+            do {
+                try modelContext.save()
+            } catch {
+                print("❌ Failed to save quote: \(error)")
+            }
+        }
+    }
+
+
     
     private func fetchAndSaveQuote() async {
         let quoteService = QuoteService(snug: selectedSnug)
@@ -285,8 +357,9 @@ struct ContentView: View {
             }
             
             modelContext.insert(quote)
-            
+            try  modelContext.save()
             withAnimation {
+               
                 authenticated = true
             }
             

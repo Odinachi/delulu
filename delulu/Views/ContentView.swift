@@ -23,6 +23,8 @@ struct ContentView: View {
     
     @State private var currentQuoteIndex = 0
     @State private var isLoading = false
+    @State private var isScreenshoting = false
+    
     
 
     
@@ -118,7 +120,8 @@ struct ContentView: View {
                         .ignoresSafeArea()
                     
                     VStack {
-                        HStack {
+                      
+                            HStack {
                             Spacer()
                             Button(action: {
                                 withAnimation {
@@ -127,6 +130,9 @@ struct ContentView: View {
                                 }
                             }) {
                                 Text("T").foregroundColor(.white).font(.title)
+                                
+                                
+                                    .opacity(isScreenshoting ? 0.0 : 1.0)
                             }
                             Button(action: {
                                 withAnimation {
@@ -137,7 +143,7 @@ struct ContentView: View {
                                 Image(systemName: "paintpalette")
                                     .padding()
                                     .font(.title2)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.white) .opacity(isScreenshoting ? 0.0 : 1.0)
                             }
                             Button(action: {
                                 if !items.isEmpty && currentQuoteIndex < items.count {
@@ -154,9 +160,16 @@ struct ContentView: View {
                                 Image(systemName: !items.isEmpty && currentQuoteIndex < items.count && (items[currentQuoteIndex].saved == true) ? "bookmark.fill" : "bookmark")
                                     .padding()
                                     .font(.title2)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.white) .opacity(isScreenshoting ? 0.0 : 1.0)
                             }
-                            Button(action: {}) {
+                            Button(action: {
+                                isScreenshoting = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                    takeScreenshotAndShare()
+                                   isScreenshoting = false
+                                }
+                               
+                            }) {
                                 Image(systemName: "paperplane.fill")
                                     .padding()
                                     .font(.title2)
@@ -164,7 +177,8 @@ struct ContentView: View {
                             }
                         }
                         .padding(.bottom, (showImageDialog || showTextDialog) ? 0 : 100)
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, 20) .opacity(isScreenshoting ? 0.0 : 1.0)
+                        
                         
                         
                         if showImageDialog {
@@ -250,26 +264,28 @@ struct ContentView: View {
                         
                         
                         
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                if let latestItem = self.items.max(by: { $0.timestamp ?? Date.distantPast < $1.timestamp ?? Date.distantPast }) {
-                                    withAnimation {
-                                        authenticated = false
-                                        MessagingService.shared.unsubscribeFromTopic(latestItem.snug)
+                       if !isScreenshoting {
+                            HStack {
+                                Spacer()
+                                Button(action: {
+                                    if let latestItem = self.items.max(by: { $0.timestamp ?? Date.distantPast < $1.timestamp ?? Date.distantPast }) {
+                                        withAnimation {
+                                            authenticated = false
+                                            MessagingService.shared.unsubscribeFromTopic(latestItem.snug)
+                                        }
                                     }
-                                }
-                                for item in self.items where item.saved == false {
-                                    if let timestamp = item.timestamp, Date().timeIntervalSince(timestamp) > 12 * 60 * 60 {
-                                        self.modelContext.delete(item)
+                                    for item in self.items where item.saved == false {
+                                        if let timestamp = item.timestamp, Date().timeIntervalSince(timestamp) > 12 * 60 * 60 {
+                                            self.modelContext.delete(item)
+                                        }
                                     }
+                                }) {
+                                    Image(systemName: "globe")
+                                        .foregroundColor(.white)
+                                        .font(.callout)
                                 }
-                            }) {
-                                Image(systemName: "globe")
-                                    .foregroundColor(.white)
-                                    .font(.callout)
+                                Spacer()
                             }
-                            Spacer()
                         }
                     }
                     .frame(width: UIScreen.main.bounds.width).onAppear {
@@ -324,6 +340,39 @@ struct ContentView: View {
             }
         }
     }
+    
+    
+//    func takeScreenshot() {
+//        var renderer = ImageRenderer(content: self.body)
+//        
+//        // Ensure the background is opaque (no alpha channel)
+//        renderer.scale = UIScreen.main.scale
+//        renderer.isOpaque = true
+//        
+//        if let image = renderer.uiImage {
+//            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+//            print("Screenshot saved to photos!")
+//        }
+//    }
+    
+    func takeScreenshotAndShare() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            return
+        }
+        
+        let renderer = UIGraphicsImageRenderer(size: window.bounds.size)
+        let image = renderer.image { ctx in
+            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }
+        
+        // Share the screenshot
+        let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+        if let rootVC = window.rootViewController {
+            rootVC.present(activityVC, animated: true)
+        }
+    }
+    
 
 
     

@@ -446,7 +446,7 @@ struct ContentView: View {
             MessagingService.shared.subscribeToTopic(selectedSnug)
             
         } catch {
-            print("kkkkkk \(error.localizedDescription)")
+            
            
             errorMsg = error.localizedDescription
             showToast = true

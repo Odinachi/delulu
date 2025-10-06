@@ -27,10 +27,6 @@ struct ContentView: View {
     @State private var showToast: Bool = false
     @State private var errorMsg: String = ""
     
-    
-    
-
-    
     var body: some View {
         Group {
             if !authenticated {
@@ -52,10 +48,12 @@ struct ContentView: View {
                         
                         Picker("Profession", selection: $selectedProfession) {
                             ForEach(professionMap, id: \.self) { profession in
-                                Text(profession["name"] ?? "Unknown")
-                                    .foregroundColor(.white)
-                                    .fontWeight(.semibold)
-                                    .tag(profession["name"] ?? "")
+                                if let name = profession["name"] {
+                                    Text(name)
+                                        .foregroundColor(.white)
+                                        .fontWeight(.semibold)
+                                        .tag(name)
+                                }
                             }
                         }
                         .pickerStyle(.wheel)
@@ -66,10 +64,8 @@ struct ContentView: View {
                         )
                         .frame(height: 150)
                         .clipped()
-                        .onChange(of: selectedProfession) { newValue in
-                            if let selected = professionMap.first(where: { $0["name"] == newValue }) {
-                                selectedSnug = selected["snug"] ?? ""
-                            }
+                        .onChange(of: selectedProfession) { oldValue, newValue in
+                            updateSelectedSnug(for: newValue)
                         }
                         
                         Spacer()
@@ -111,6 +107,10 @@ struct ContentView: View {
                         
                         Spacer()
                     }
+                }
+                .onAppear {
+                    // Initialize selectedSnug when view appears
+                    updateSelectedSnug(for: selectedProfession)
                 }
             } else {
                 ZStack {
@@ -159,9 +159,9 @@ struct ContentView: View {
                                        
                                         errorMsg = error.localizedDescription
                                         showToast = true
-                                        DispatchQueue.global().asyncAfter(deadline: .now() + 2) {
-                                                  showToast = false
-                                               }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                            showToast = false
+                                        }
                                         
                                     }
                                 }
@@ -249,13 +249,22 @@ struct ContentView: View {
                                             .ignoresSafeArea()
                                         
                                         
-                                        VStack{
-                                            Text(items[index].quote)
-                                                .font(Font.custom(fontStyle, size: 35, relativeTo: .largeTitle))
-                                                .fontWeight(.semibold)
-                                                .foregroundColor(.white)
-                                                .multilineTextAlignment(.center)
-                                                .padding(.horizontal, 30).padding(.top, 100)
+                                        VStack {
+                                            if items.indices.contains(index) {
+                                                Text(items[index].quote)
+                                                    .font(.custom(fontStyle, size: 35, relativeTo: .largeTitle))
+                                                    .fontWeight(.semibold)
+                                                    .foregroundColor(.white)
+                                                    .multilineTextAlignment(.center)
+                                                    .padding(.horizontal, 30)
+                                                    .padding(.top, 100)
+                                            } else {
+                                                
+                                                EmptyView()
+
+                                               
+                                            }
+
                                             Spacer()
                                         }
                                         
@@ -264,6 +273,12 @@ struct ContentView: View {
                                 }
                             }
                             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                            .onChange(of: items.count) { oldCount, newCount in
+                                // Reset index if it's out of bounds
+                                if currentQuoteIndex >= newCount {
+                                    currentQuoteIndex = max(0, newCount - 1)
+                                }
+                            }
                         } else {
                             Text("No quotes available.")
                                 .foregroundColor(.white)
@@ -278,15 +293,17 @@ struct ContentView: View {
                                 Spacer()
                                 Button(action: {
                                     if let latestItem = self.items.max(by: { $0.timestamp ?? Date.distantPast < $1.timestamp ?? Date.distantPast }) {
-                                        withAnimation {
-                                            authenticated = false
-                                            MessagingService.shared.unsubscribeFromTopic(latestItem.snug)
-                                        }
+                                        MessagingService.shared.unsubscribeFromTopic(latestItem.snug)
                                     }
                                     for item in self.items where item.saved == false {
                                         if let timestamp = item.timestamp, Date().timeIntervalSince(timestamp) > 12 * 60 * 60 {
                                             self.modelContext.delete(item)
                                         }
+                                    }
+                                    // Reset index and authentication after cleanup
+                                    currentQuoteIndex = 0
+                                    withAnimation {
+                                        authenticated = false
                                     }
                                 }) {
                                     Image(systemName: "globe")
@@ -312,9 +329,20 @@ struct ContentView: View {
         }.toast(isShown: $showToast, message: errorMsg)
     }
     
+    // Helper function to update selectedSnug
+    private func updateSelectedSnug(for professionName: String) {
+        if let selected = professionMap.first(where: { $0["name"] == professionName }) {
+            selectedSnug = selected["snug"] ?? "software_developer"
+        }
+    }
+    
     private func checkForSavedQuotes() {
         if !items.isEmpty {
             authenticated = true
+            // Ensure currentQuoteIndex is valid
+            if currentQuoteIndex >= items.count {
+                currentQuoteIndex = 0
+            }
         }
     }
     
@@ -349,9 +377,9 @@ struct ContentView: View {
             } catch {
                 errorMsg = error.localizedDescription
                 showToast = true
-                DispatchQueue.global().asyncAfter(deadline: .now() + 2) {
-                          showToast = false
-                       }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    showToast = false
+                }
             }
         }
     }
@@ -418,13 +446,13 @@ struct ContentView: View {
             MessagingService.shared.subscribeToTopic(selectedSnug)
             
         } catch {
-            
+            print("kkkkkk \(error.localizedDescription)")
            
             errorMsg = error.localizedDescription
             showToast = true
-            DispatchQueue.global().asyncAfter(deadline: .now() + 2) {
-                      showToast = false
-                   }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                showToast = false
+            }
         }
     }
 }
